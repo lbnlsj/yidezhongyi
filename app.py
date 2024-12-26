@@ -1,121 +1,127 @@
-from flask import Flask, render_template, jsonify, request
-from datetime import datetime, timedelta
-import random
-import uuid
+from flask import Flask, render_template, request, jsonify
+import json
+import threading
+import time
+from utils import get_doctor_schedule, make_appointment
 
 app = Flask(__name__)
 
-# 模拟数据 - 医生列表
-DOCTORS = {
-    1: {"id": 1, "name": "张医生", "department": "内科", "title": "主任医师"},
-    2: {"id": 2, "name": "李医生", "department": "外科", "title": "副主任医师"},
-    3: {"id": 3, "name": "王医生", "department": "儿科", "title": "主治医师"},
-    4: {"id": 4, "name": "刘医生", "department": "内科", "title": "主治医师"},
-    5: {"id": 5, "name": "陈医生", "department": "神经科", "title": "主任医师"}
+# Global variables for controlling the scanning thread
+scanning_thread = None
+is_scanning = False
+config = {
+    "doctor_id": "",
+    "card_id": "",
+    "x_token": "",
+    "is_running": False
 }
 
 
-# 生成时间段数据
-def generate_time_slots():
-    time_slots = []
-    base_date = datetime.now().replace(hour=8, minute=0, second=0, microsecond=0)
-
-    for day in range(7):
-        current_date = base_date + timedelta(days=day)
-        for hour in range(8, 17):
-            for minute in [0, 30]:
-                slot_time = current_date.replace(hour=hour, minute=minute)
-                time_slots.append({
-                    "id": len(time_slots) + 1,
-                    "start_time": slot_time.strftime("%Y-%m-%d %H:%M"),
-                    "available": random.choice([True, False])
-                })
-    return time_slots
+def load_config():
+    try:
+        with open('config.json', 'r') as f:
+            global config
+            config = json.load(f)
+    except FileNotFoundError:
+        save_config()
 
 
-TIME_SLOTS = generate_time_slots()
+def save_config():
+    with open('config.json', 'w') as f:
+        json.dump(config, f)
 
-# 存储正在运行的任务
-RUNNING_TASKS = {}
+
+def scanning_task():
+    global is_scanning
+    while is_scanning:
+        try:
+            # Check morning schedule
+            morning_schedule = get_doctor_schedule(is_am=1)
+            if morning_schedule and morning_schedule.get('data'):
+                schedule_date_id = morning_schedule['data'][0].get('schedule_date_id')
+                if schedule_date_id:
+                    result = make_appointment(
+                        schedule_date_id=str(schedule_date_id),
+                        card_id=int(config['card_id'])
+                    )
+                    print(f"Morning appointment result: {result}")
+                    is_scanning = False
+                    config['is_running'] = False
+                    save_config()
+                    return
+
+            # Check afternoon schedule
+            afternoon_schedule = get_doctor_schedule(is_am=0)
+            if afternoon_schedule and afternoon_schedule.get('data'):
+                schedule_date_id = afternoon_schedule['data'][0].get('schedule_date_id')
+                if schedule_date_id:
+                    result = make_appointment(
+                        schedule_date_id=str(schedule_date_id),
+                        card_id=int(config['card_id'])
+                    )
+                    print(f"Afternoon appointment result: {result}")
+
+                    is_scanning = False
+                    config['is_running'] = False
+                    save_config()
+                    return
+
+        except Exception as e:
+            print(f"Error during scanning: {str(e)}")
+
+        time.sleep(5)  # Wait for 5 seconds before next scan
+
+
+# Replace before_first_request with alternative approach
+with app.app_context():
+    load_config()
 
 
 @app.route('/')
 def index():
-    """渲染主页（任务列表页面）"""
-    return render_template('index.html', tasks=RUNNING_TASKS)
+    return render_template('index.html', config=config)
 
 
-@app.route('/select')
-def select():
-    """渲染选择页面"""
-    return render_template('select.html',
-                           doctors=DOCTORS.values(),
-                           time_slots=TIME_SLOTS)
-
-
-@app.route('/api/doctors')
-def search_doctors():
-    """搜索医生API"""
-    keyword = request.args.get('keyword', '').lower()
-    if not keyword:
-        return jsonify(list(DOCTORS.values()))
-
-    filtered_doctors = [
-        doctor for doctor in DOCTORS.values()
-        if keyword in doctor['name'].lower() or
-           keyword in doctor['department'].lower() or
-           keyword in doctor['title'].lower()
-    ]
-    return jsonify(filtered_doctors)
-
-
-@app.route('/api/add_task', methods=['POST'])
-def add_task():
-    """添加新任务"""
+@app.route('/api/config', methods=['POST'])
+def update_config():
+    global config
     data = request.json
-    doctor_id = data.get('doctor_id')
-    time_slot_id = data.get('time_slot_id')
+    config.update(data)
+    save_config()
+    return jsonify({"status": "success"})
 
-    if not doctor_id or not time_slot_id:
-        return jsonify({"success": False, "message": "请选择医生和时间段"})
 
-    # 创建新任务
-    task_id = str(uuid.uuid4())
-    doctor = DOCTORS.get(int(doctor_id))
-    time_slot = next((slot for slot in TIME_SLOTS if slot["id"] == int(time_slot_id)), None)
+@app.route('/api/start', methods=['POST'])
+def start_scanning():
+    global scanning_thread, is_scanning, config
 
-    if not doctor or not time_slot:
-        return jsonify({"success": False, "message": "无效的医生或时间段"})
+    if not is_scanning:
+        is_scanning = True
+        config['is_running'] = True
+        save_config()
+        scanning_thread = threading.Thread(target=scanning_task)
+        scanning_thread.daemon = True
+        scanning_thread.start()
 
-    RUNNING_TASKS[task_id] = {
-        "id": task_id,
-        "doctor": doctor,
-        "time_slot": time_slot,
-        "status": "running",
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+    return jsonify({"status": "success", "message": "Scanning started"})
 
+
+@app.route('/api/stop', methods=['POST'])
+def stop_scanning():
+    global is_scanning, config
+    is_scanning = False
+    config['is_running'] = False
+    save_config()
+    return jsonify({"status": "success", "message": "Scanning stopped"})
+
+
+@app.route('/api/status', methods=['GET'])
+def get_status():
     return jsonify({
-        "success": True,
-        "message": "任务已添加",
-        "task": RUNNING_TASKS[task_id]
+        "is_running": config['is_running'],
+        "config": config
     })
 
 
-@app.route('/api/delete_task/<task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    """删除任务"""
-    if task_id in RUNNING_TASKS:
-        del RUNNING_TASKS[task_id]
-        return jsonify({"success": True, "message": "任务已删除"})
-    return jsonify({"success": False, "message": "任务不存在"})
-
-
-@app.route('/api/tasks')
-def get_tasks():
-    """获取所有任务"""
-    return jsonify(list(RUNNING_TASKS.values()))
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
