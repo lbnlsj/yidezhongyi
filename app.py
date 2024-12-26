@@ -72,7 +72,7 @@ def scanning_task():
         except Exception as e:
             print(f"Error during scanning: {str(e)}")
 
-        time.sleep(5)  # Wait for 5 seconds before next scan
+        time.sleep(0.5)  # Wait for 5 seconds before next scan
 
 
 # Replace before_first_request with alternative approach
