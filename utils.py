@@ -12,7 +12,7 @@ def get_doctor_schedule(config, is_am: int = 0) -> Dict:
     返回:
         Dict: 接口返回的JSON数据
     """
-    base_url = f"https://yy.baiyikeyi.top/stj_api/doctor/schedule_time?&department_id=3&doctor_id={config['doctor_id']}&date=2024-12-27&is_am={is_am}"
+    base_url = f"https://yy.baiyikeyi.top/stj_api/doctor/schedule_time?&department_id={config['department_id']}&doctor_id={config['doctor_id']}&date=2024-12-27&is_am={is_am}"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 NetType/WIFI MicroMessenger/6.8.0(0x16080000) MacWechat/3.8.8(0x13080813) XWEB/1227 Flue',

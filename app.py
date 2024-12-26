@@ -10,6 +10,7 @@ app = Flask(__name__)
 scanning_thread = None
 is_scanning = False
 config = {
+    "department_id": "",
     "doctor_id": "",
     "card_id": "",
     "x_token": "",

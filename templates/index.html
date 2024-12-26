@@ -10,6 +10,7 @@
             max-width: 600px;
             margin-top: 50px;
         }
+
         .status-indicator {
             width: 15px;
             height: 15px;
@@ -17,86 +18,93 @@
             display: inline-block;
             margin-right: 5px;
         }
+
         .status-running {
             background-color: #28a745;
         }
+
         .status-stopped {
             background-color: #dc3545;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="mb-4">预约配置</h2>
+<div class="container">
+    <h2 class="mb-4">预约配置</h2>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="doctorId" class="form-label">医生ID</label>
-                    <input type="text" class="form-control" id="doctorId" value="{{ config.doctor_id }}">
-                </div>
-                <div class="mb-3">
-                    <label for="cardId" class="form-label">就诊卡ID</label>
-                    <input type="text" class="form-control" id="cardId" value="{{ config.card_id }}">
-                </div>
-                <div class="mb-3">
-                    <label for="xToken" class="form-label">X-Token</label>
-                    <input type="text" class="form-control" id="xToken" value="{{ config.x_token }}">
-                </div>
-                <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="departmentId" class="form-label">department ID</label>
+                <input type="text" class="form-control" id="departmentId" value="{{ config.department_id }}">
             </div>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">运行状态</h5>
-                <div class="mb-3">
-                    <span class="status-indicator" id="statusIndicator"></span>
-                    <span id="statusText">正在加载...</span>
-                </div>
-                <button class="btn btn-success me-2" id="startBtn" onclick="startScanning()">启动</button>
-                <button class="btn btn-danger" id="stopBtn" onclick="stopScanning()">停止</button>
+            <div class="mb-3">
+                <label for="doctorId" class="form-label">医生ID</label>
+                <input type="text" class="form-control" id="doctorId" value="{{ config.doctor_id }}">
             </div>
+            <div class="mb-3">
+                <label for="cardId" class="form-label">就诊卡ID</label>
+                <input type="text" class="form-control" id="cardId" value="{{ config.card_id }}">
+            </div>
+            <div class="mb-3">
+                <label for="xToken" class="form-label">X-Token</label>
+                <input type="text" class="form-control" id="xToken" value="{{ config.x_token }}">
+            </div>
+            <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
         </div>
     </div>
 
-    <script>
-        let isRunning = {{ 'true' if config.is_running else 'false' }};
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">运行状态</h5>
+            <div class="mb-3">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">正在加载...</span>
+            </div>
+            <button class="btn btn-success me-2" id="startBtn" onclick="startScanning()">启动</button>
+            <button class="btn btn-danger" id="stopBtn" onclick="stopScanning()">停止</button>
+        </div>
+    </div>
+</div>
 
-        function updateStatus(running) {
-            isRunning = running;
-            const indicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
+<script>
+    let isRunning = {{'true' if config.is_running else 'false' }};
 
-            if (running) {
-                indicator.className = 'status-indicator status-running';
-                statusText.textContent = '运行中';
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-            } else {
-                indicator.className = 'status-indicator status-stopped';
-                statusText.textContent = '已停止';
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            }
+    function updateStatus(running) {
+        isRunning = running;
+        const indicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        if (running) {
+            indicator.className = 'status-indicator status-running';
+            statusText.textContent = '运行中';
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        } else {
+            indicator.className = 'status-indicator status-stopped';
+            statusText.textContent = '已停止';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
         }
+    }
 
-        function saveConfig() {
-            const config = {
-                doctor_id: document.getElementById('doctorId').value,
-                card_id: document.getElementById('cardId').value,
-                x_token: document.getElementById('xToken').value
-            };
+    function saveConfig() {
+        const config = {
+            department_id: document.getElementById('departmentId').value,
+            doctor_id: document.getElementById('doctorId').value,
+            card_id: document.getElementById('cardId').value,
+            x_token: document.getElementById('xToken').value
+        };
 
-            fetch('/api/config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(config)
-            })
+        fetch('/api/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(config)
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -107,12 +115,12 @@
                 console.error('Error:', error);
                 alert('保存配置失败');
             });
-        }
+    }
 
-        function startScanning() {
-            fetch('/api/start', {
-                method: 'POST',
-            })
+    function startScanning() {
+        fetch('/api/start', {
+            method: 'POST',
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -123,12 +131,12 @@
                 console.error('Error:', error);
                 alert('启动失败');
             });
-        }
+    }
 
-        function stopScanning() {
-            fetch('/api/stop', {
-                method: 'POST',
-            })
+    function stopScanning() {
+        fetch('/api/stop', {
+            method: 'POST',
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -139,22 +147,22 @@
                 console.error('Error:', error);
                 alert('停止失败');
             });
-        }
+    }
 
-        function checkStatus() {
-            fetch('/api/status')
+    function checkStatus() {
+        fetch('/api/status')
             .then(response => response.json())
             .then(data => {
                 updateStatus(data.is_running);
             })
             .catch(error => console.error('Error:', error));
-        }
+    }
 
-        // Initialize status
-        updateStatus(isRunning);
+    // Initialize status
+    updateStatus(isRunning);
 
-        // Check status periodically
-        setInterval(checkStatus, 5000);
-    </script>
+    // Check status periodically
+    setInterval(checkStatus, 5000);
+</script>
 </body>
 </html>
