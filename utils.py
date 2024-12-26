@@ -2,7 +2,7 @@ import requests
 from typing import Dict, Optional
 
 
-def get_doctor_schedule(is_am: int = 0) -> Dict:
+def get_doctor_schedule(config, is_am: int = 0) -> Dict:
     """
     获取医生排班时间信息的函数
 
@@ -12,7 +12,7 @@ def get_doctor_schedule(is_am: int = 0) -> Dict:
     返回:
         Dict: 接口返回的JSON数据
     """
-    base_url = f"https://yy.baiyikeyi.top/stj_api/doctor/schedule_time?&department_id=64&doctor_id=6&date=2024-12-27&is_am={is_am}"
+    base_url = f"https://yy.baiyikeyi.top/stj_api/doctor/schedule_time?&department_id=3&doctor_id={config['doctor_id']}&date=2024-12-27&is_am={is_am}"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 NetType/WIFI MicroMessenger/6.8.0(0x16080000) MacWechat/3.8.8(0x13080813) XWEB/1227 Flue',
@@ -20,7 +20,7 @@ def get_doctor_schedule(is_am: int = 0) -> Dict:
         'from': 'h5',
         'insid': 'Mg==',
         'branchid': '2',
-        'x-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ5eS5iYWl5aWtleWkudG9wIiwiYXVkIjoieXkuYmFpeWlrZXlpLnRvcCIsImlhdCI6MTczNTIwNzU4NywibmJmIjoxNzM1MjA3NTg3LCJleHAiOjE3Mzc3OTk1ODcsImp0aSI6WzMzMDc2LCJ1c2VyIl19.jxZFqBEGD51lnFcqUBf0hubm3KMqOpZICeb8ZysqoGc',
+        'x-token': config['x_token'],
         'Accept-Language': 'zh-CN,zh;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Sec-Fetch-Site': 'same-origin',
@@ -37,7 +37,7 @@ def get_doctor_schedule(is_am: int = 0) -> Dict:
         return None
 
 
-def make_appointment(schedule_date_id: str, card_id: int, info_text: str = "") -> Dict:
+def make_appointment(config, schedule_date_id: str, card_id: int, info_text: str = "") -> Dict:
     """
     预约医生门诊的函数
 
@@ -57,7 +57,7 @@ def make_appointment(schedule_date_id: str, card_id: int, info_text: str = "") -
         'from': 'h5',
         'insid': 'Mg==',
         'branchid': '2',
-        'x-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ5eS5iYWl5aWtleWkudG9wIiwiYXVkIjoieXkuYmFpeWlrZXlpLnRvcCIsImlhdCI6MTczNTIwNzU4NywibmJmIjoxNzM1MjA3NTg3LCJleHAiOjE3Mzc3OTk1ODcsImp0aSI6WzMzMDc2LCJ1c2VyIl19.jxZFqBEGD51lnFcqUBf0hubm3KMqOpZICeb8ZysqoGc',
+        'x-token': config['x_token'],
         'Content-Type': 'application/json',
         'Accept-Language': 'zh-CN,zh;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',

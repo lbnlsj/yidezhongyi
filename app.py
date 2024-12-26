@@ -36,11 +36,12 @@ def scanning_task():
     while is_scanning:
         try:
             # Check morning schedule
-            morning_schedule = get_doctor_schedule(is_am=1)
+            morning_schedule = get_doctor_schedule(config, is_am=1)
             if morning_schedule and morning_schedule.get('data'):
                 schedule_date_id = morning_schedule['data'][0].get('schedule_date_id')
                 if schedule_date_id:
                     result = make_appointment(
+                        config,
                         schedule_date_id=str(schedule_date_id),
                         card_id=int(config['card_id'])
                     )
@@ -51,11 +52,12 @@ def scanning_task():
                     return
 
             # Check afternoon schedule
-            afternoon_schedule = get_doctor_schedule(is_am=0)
+            afternoon_schedule = get_doctor_schedule(config, is_am=0)
             if afternoon_schedule and afternoon_schedule.get('data'):
                 schedule_date_id = afternoon_schedule['data'][0].get('schedule_date_id')
                 if schedule_date_id:
                     result = make_appointment(
+                        config,
                         schedule_date_id=str(schedule_date_id),
                         card_id=int(config['card_id'])
                     )
