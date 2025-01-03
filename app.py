@@ -41,11 +41,13 @@ def scanning_task():
             if morning_schedule and morning_schedule.get('data'):
                 schedule_date_id = morning_schedule['data'][0].get('schedule_date_id')
                 if schedule_date_id:
+                    time.sleep(1)
                     result = make_appointment(
                         config,
                         schedule_date_id=str(schedule_date_id),
                         card_id=int(config['card_id'])
                     )
+
                     print(f"Morning appointment result: {result}")
                     is_scanning = False
                     config['is_running'] = False
@@ -57,6 +59,7 @@ def scanning_task():
             if afternoon_schedule and afternoon_schedule.get('data'):
                 schedule_date_id = afternoon_schedule['data'][0].get('schedule_date_id')
                 if schedule_date_id:
+                    time.sleep(1)
                     result = make_appointment(
                         config,
                         schedule_date_id=str(schedule_date_id),
